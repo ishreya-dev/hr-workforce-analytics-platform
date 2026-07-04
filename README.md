@@ -84,7 +84,7 @@ Full KPI definitions and reconciliation queries live in `ETL/SQL/kpi_queries.sql
 ## Project Structure
 
 ```
-Analytics/      Excel workbook + dashboard, Power BI .pbix, Tableau
+Analytics/      Excel workbook + dashboard, Power BI .pbix
 Architecture/   HLD, LLD, DataArchitecture, system diagram
 Business/       BRD, TRD, insights and recommendations
 Data/raw/       Legacy 15-column extract (untouched, read only by pre-existing dashboards)
