@@ -1,0 +1,2 @@
+# This file ensures the Data/processed directory is tracked by git
+# The actual processed data files are gitignored (generated during pipeline execution)

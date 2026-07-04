@@ -1,0 +1,104 @@
+# Pre-commit hooks for HR Attrition & Workforce Analytics
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # ---------------------------------------------------------------------------
+  # Code Formatting
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        language_version: python3.9
+        args: [--line-length=100]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=100]
+
+  # ---------------------------------------------------------------------------
+  # Linting
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=100, --extend-ignore=E203,W503]
+        additional_dependencies: [flake8-bugbear]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        args: [--ignore-missing-imports, --strict]
+        exclude: ^tests/
+
+  # ---------------------------------------------------------------------------
+  # Security
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, ETL/, -ll]
+        exclude: ^tests/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # ---------------------------------------------------------------------------
+  # Python-specific
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-mock-methods
+      - id: python-no-eval
+      - id: python-use-type-annotations
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+      - id: pyupgrade
+        args: [--py39-plus]
+
+  # ---------------------------------------------------------------------------
+  # Documentation
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.35.0
+    hooks:
+      - id: markdownlint
+        args: [--disable=MD013, MD033]  # Allow long lines and inline HTML
+        exclude: ^CHANGELOG.md
+
+  # ---------------------------------------------------------------------------
+  # SQL
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 2.1.1
+    hooks:
+      - id: sqlfluff-lint
+        args: [--dialect=sqlite]
+        exclude: ^tests/
+      - id: sqlfluff-fix
+        args: [--dialect=sqlite]
+        exclude: ^tests/

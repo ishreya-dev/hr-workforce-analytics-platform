@@ -1,0 +1,74 @@
+# System Architecture
+**Project:** HR Attrition & Workforce Analytics Dashboard
+**Related documents:** `HLD.md`, `LLD.md`, `DataArchitecture.md`
+
+---
+
+## 1. Purpose
+
+This document captures *why* the system is built the way it is — the technology choices and the trade-offs behind them. Where the HLD/LLD describe the system, this document defends it.
+---
+
+## 2. System Boundary
+
+This is a **single-analyst, local-execution, batch-processing system**. It is not a live service, not multi-user, and has no orchestration layer. That boundary is intentional — see Section 5.
+
+```
+                     ┌─────────────────────────────────────┐
+                     │           System Boundary            │
+                     │                                       │
+   hrdata.csv ───▶  │  Python → SQL → Power BI → Reports   │  ───▶ Analyst / Stakeholder
+                     │                                       │
+                     └─────────────────────────────────────┘
+```
+
+No component inside this boundary calls out to an external live system, API, or database service — everything runs locally against a static file.
+
+---
+
+## 3. Technology Decisions & Rationale
+
+### 3.1 Why Python for cleaning, not SQL-only or Excel?
+Python (pandas) gives reproducible, version-controlled, testable transformations with proper logging. Excel edits are invisible, unauditable, and not diffable in git. Doing all cleaning purely in SQL is possible, but pandas is faster to iterate on for the kind of exploratory profiling and validation logic this stage needs (e.g., quickly checking value distributions before deciding on a validation rule).
+
+### 3.2 Why a distinct SQL modeling layer, not just Power Query inside Power BI?
+Two reasons. First, it demonstrates transferable SQL skill independent of any single BI tool — a genuinely portable, in-demand skill. Second, and more importantly, it creates an **independent second calculation** of every KPI, which is what makes real reconciliation possible (see `Testing/`). If cleaning and KPI logic only existed inside Power Query, there would be nothing outside Power BI to check its numbers against.
+
+### 3.3 Why Power BI as the primary visualization tool, not Tableau?
+Power BI has meaningfully higher enterprise adoption at Big 4-type consulting clients and integrates natively with the Microsoft data stack these firms typically standardize on (Azure, Excel, SharePoint, Fabric). Tableau is retained in the repository to demonstrate tool range, but is explicitly framed as secondary — the project deliberately avoids having two "primary" dashboards that could quietly drift out of sync with each other.
+
+### 3.4 Why keep the existing dashboard layout rather than redesign it?
+This was a stated project constraint, but it also mirrors a genuinely common real-world scenario: inheriting and extending someone else's BI asset rather than always starting from a blank canvas. Demonstrating the discipline to add value *without* unnecessarily rebuilding something that already works is itself a signal worth showing a reviewer.
+
+### 3.5 Why SQLite for development instead of a full PostgreSQL/cloud database?
+Zero-install, fully portable, and sufficient for this data volume (~1,470 rows). All SQL is written to be PostgreSQL-compatible so the same scripts would run against a real production database with minimal changes — this is stated explicitly so it doesn't read as a skill gap, but as a scoping decision appropriate to a local portfolio project.
+
+### 3.6 Why no orchestration tool (e.g., Airflow, dbt)?
+The pipeline runs once per analysis cycle, triggered manually by the analyst — it is not a continuously refreshing production system. Introducing orchestration tooling here would add complexity without a corresponding real need, which is its own kind of bad engineering judgment. The "what I'd add at real scale" answer (Section 4) exists specifically so this isn't mistaken for a skill gap either.
+
+---
+
+## 4. What Would Change at Real Enterprise Scale
+
+
+- A live HRIS connection (e.g., Workday, SAP SuccessFactors API) instead of a static CSV extract
+- A proper data warehouse (Snowflake, BigQuery, or Azure Synapse/Fabric) instead of SQLite
+- An orchestration layer (Airflow, dbt, or Azure Data Factory) to schedule and monitor pipeline runs
+- A `Dim_Date` and SCD Type 2 logic on department/role dimensions, enabled by real historical data (see `DataArchitecture.md` Section 6)
+- Automated *reconciliation* checks (not just unit tests) integrated into CI — a
+  basic GitHub Actions workflow now runs `pytest tests/` on every push/PR
+  (`.github/workflows/tests.yml`), but it doesn't yet run the full pipeline
+  end-to-end against the real Excel source or diff `Testing/kpi_reconciliation.md`
+  automatically; that's the remaining gap at real enterprise scale.
+- Row-level security in Power BI if the dashboard were to be shared across department managers who should only see their own department's data
+
+---
+
+## 5. Deliberate Scope Boundaries (recap)
+
+| In Scope | Out of Scope | Why |
+|---|---|---|
+| Batch, manual pipeline execution | Live/scheduled refresh | No live data source exists to refresh from |
+| Descriptive + light diagnostic analytics | Predictive/ML attrition modeling | Explicitly out of scope per `BRD.md`; would dilute focus from the core engineering/documentation gap being addressed |
+| Single-source static data | Multi-source integration | Only one dataset exists in this project's scope |
+| Local execution | Cloud hosting/deployment | Portfolio project scope, not a staffed production engagement |
