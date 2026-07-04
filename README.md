@@ -12,6 +12,9 @@ End-to-end workforce analytics platform that transforms raw HR data into actiona
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-success)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
+<img width="1847" height="882" alt="Screenshot 2026-07-04 171125" src="https://github.com/user-attachments/assets/34ef32bf-03bd-41fb-85d5-206d7d742a91" />
+
+
 ## Features
 
 - Automated Python ETL pipeline with profiling and validation
