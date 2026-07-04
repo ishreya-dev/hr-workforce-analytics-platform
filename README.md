@@ -60,6 +60,9 @@ Analytics/Excel/HR DATA_Excel.xlsx ("Data" sheet, raw)
 
 Full KPI definitions and reconciliation queries live in `ETL/SQL/kpi_queries.sql`, `department_analysis.sql`, and `attrition_deep_dive.sql`.
 
+<img width="1450" height="812" alt="Screenshot 2026-07-04 133033" src="https://github.com/user-attachments/assets/e10a79cc-76d6-45af-bbb3-4d86121d9809" />
+
+
 ## Quality Assurance
 
 | Metric        | Status         |
