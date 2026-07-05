@@ -120,7 +120,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 The project includes a complete walkthrough demonstrating dashboard navigation, KPI interactions, dynamic slicers, and business insights.
 
 <p align="center">
-<img src="assets/HRProject.gif" width="900">
+<img src="assets/HRProjectvideo.gif" width="900">
 </p>
 
 ---
