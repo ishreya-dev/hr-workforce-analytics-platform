@@ -89,7 +89,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 
 ### Doctoral Degree
 
-<img src="assets/doctoral_degree.png" width="430">
+<img src="assets/dashboards/doctoral_degree.png" width="430">
 
 </td>
 
