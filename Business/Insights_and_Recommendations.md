@@ -1,99 +1,236 @@
-# Insights & Recommendations
-**Project:** HR Attrition & Workforce Analytics
-**Basis:** `ETL/SQL/kpi_queries.sql`, `department_analysis.sql`, `attrition_deep_dive.sql`, and views in `views.sql`, run against the full 1,470-employee, 43-column source. Every number below is reproducible from those files — see the query note under each finding.
-**Addresses:** `Business/BRD.md` Section 3 (business questions) and Section 6 (≥5 quantified, actionable recommendations, at least one grounded in compensation/tenure data).
+# 📊 Business Insights & Recommendations
+
+**Project:** HR Attrition & Workforce Analytics Platform
 
 ---
 
-## Headline
+## Executive Summary
 
-Overall attrition is **16.12%** (237 of 1,470 employees). It is not evenly distributed — it concentrates heavily in five identifiable, actionable segments below. Addressing the top two (overtime and first-year tenure) would target the majority of at-risk headcount without a company-wide policy change.
+This document summarizes the key business insights generated from the HR analytics platform.
+
+The findings are derived directly from the SQL analytical layer (`kpi_queries.sql`, `department_analysis.sql`, `attrition_deep_dive.sql`, and `views.sql`) using the complete **IBM HR Analytics dataset** containing **1,470 employees** and **43 workforce attributes**.
+
+Each recommendation is evidence-based and reproducible using the SQL queries included in this repository.
 
 ---
 
-## 1. Overtime is the single strongest attrition driver
+# 📌 Executive Snapshot
 
-- Employees working overtime: **30.5%** attrition.
-- Employees not working overtime: **10.4%** attrition.
-- Gap: **~3x**, the largest of any segment measured.
+| Metric | Value |
+|---------|------:|
+| Employees | **1,470** |
+| Employees Left | **237** |
+| Overall Attrition Rate | **16.12%** |
+| Strongest Attrition Driver | **Overtime** |
+| Highest Risk Department | **Sales** |
+| Highest Risk Job Role | **Sales Representative** |
 
-**Recommendation:** Audit overtime allocation in Sales and R&D specifically (where overtime-attrition gaps are largest — 37.5% vs. 8.6% attrition for R&D over-time vs. not). Cap sustained overtime or introduce compensating time off before it converts to attrition. This is the highest-leverage single intervention available in this dataset.
+---
 
-*Query: `SELECT over_time, ROUND(100.0*SUM(CASE WHEN attrition='Yes' THEN 1 ELSE 0 END)/COUNT(*),2) FROM Fact_Employee GROUP BY over_time` — see `kpi_queries.sql`.*
+# Executive Findings
 
-## 2. Attrition is highest in an employee's first year, then drops steadily
+Analysis indicates that employee attrition is **not evenly distributed across the organization**.
 
-| Tenure band | Attrition rate |
-|---|---|
-| 0-1 years | **34.9%** |
-| 2-3 years | 18.4% |
-| 4-5 years | 13.1% |
-| 6-10 years | 12.3% |
-| 11+ years | 8.1% |
+Instead, attrition is concentrated within a small number of identifiable workforce segments.
 
-**Recommendation:** Build a structured 12-month onboarding/retention checkpoint program (30/60/90-day check-ins, mentorship pairing). Early tenure is the single biggest attrition window — a new hire is roughly **4x more likely to leave** in year one than after year 11.
+The highest-risk groups include:
 
-*Query: tenure-band CTE against `Fact_Employee.years_at_company` — reproducible via a `CASE WHEN` grouping, same pattern as `department_analysis.sql`.*
+- Employees working overtime
+- Employees within their first year
+- Entry-level employees
+- Employees without stock options
+- Single employees
+- Employees with longer commuting distances
+- Sales Representatives
 
-## 3. Entry-level employees (Job Level 1) leave at the highest rate — and earn the least
+Addressing these workforce segments would likely deliver significantly greater retention impact than organization-wide retention initiatives.
 
-| Job Level | Attrition rate | Avg. monthly income |
-|---|---|---|
+---
+
+# 1️⃣ Overtime is the strongest predictor of attrition
+
+## Key Findings
+
+| Overtime Status | Attrition Rate |
+|-----------------|---------------:|
+| Yes | **30.5%** |
+| No | **10.4%** |
+
+Employees working overtime experience approximately **three times higher attrition** than employees who do not.
+
+### Business Impact
+
+Sustained overtime appears to be the strongest workforce risk factor observed in this dataset.
+
+### Recommendation
+
+- Review overtime allocation across departments.
+- Prioritize Sales and R&D for workload balancing.
+- Introduce compensatory leave where prolonged overtime exists.
+- Monitor overtime as a leading retention KPI.
+
+**SQL Reference**
+
+`kpi_queries.sql`
+
+---
+
+# 2️⃣ First-year employees experience the highest attrition
+
+## Key Findings
+
+| Tenure | Attrition |
+|---------|----------:|
+| 0–1 Years | **34.9%** |
+| 2–3 Years | 18.4% |
+| 4–5 Years | 13.1% |
+| 6–10 Years | 12.3% |
+| 11+ Years | 8.1% |
+
+Employees within their first year are approximately **four times more likely** to leave than long-tenured employees.
+
+### Business Impact
+
+Early-stage employee retention represents the largest opportunity for reducing overall attrition.
+
+### Recommendation
+
+Implement:
+
+- 30-Day Check-in
+- 60-Day Review
+- 90-Day Review
+- Mentorship Program
+- First-Year Retention Initiative
+
+**SQL Reference**
+
+`department_analysis.sql`
+
+---
+
+# 3️⃣ Entry-level employees represent the highest compensation-related risk
+
+| Job Level | Attrition | Average Monthly Income |
+|-----------|----------:|-----------------------:|
 | 1 | **26.3%** | $2,787 |
 | 2 | 9.7% | $5,502 |
 | 3 | 14.7% | $9,817 |
 | 4 | 4.7% | $15,504 |
 | 5 | 7.3% | $19,192 |
 
-**Recommendation:** Job Level 1 attrition (26.3%) is nearly 3x Job Level 2 (9.7%), while compensation more than doubles between those two levels. Review Level 1 compensation bands and accelerate the Level 1→2 promotion timeline — the current cliff between levels 1 and 2 looks like a retention risk, not just a natural entry-level churn pattern.
+### Business Impact
 
-*Query: `GROUP BY job_level` on `Fact_Employee`, joined against `attrition` and `monthly_income` — see `vw_compensation_summary` pattern in `views.sql`.*
+Lower compensation and slower career progression appear strongly associated with higher employee turnover among entry-level staff.
 
-## 4. Employees with no stock options attrite at 2-3x the rate of those with any
+### Recommendation
 
-| Stock Option Level | Headcount | Attrition rate |
-|---|---|---|
+- Review Level 1 compensation bands.
+- Accelerate promotion pathways.
+- Improve early career development.
+
+---
+
+# 4️⃣ Employees without stock options exhibit significantly higher attrition
+
+| Stock Option Level | Headcount | Attrition |
+|-------------------|----------:|----------:|
 | 0 | 631 | **24.4%** |
 | 1 | 596 | 9.4% |
 | 2 | 158 | 7.6% |
 | 3 | 85 | 17.7% |
 
-**Recommendation:** The jump from Level 0 to Level 1 stock options corresponds to a >2.5x drop in attrition. Since Level 0 has the largest headcount (631 employees, 43% of the workforce), extending even minimal equity participation to this group is a well-targeted, scalable retention lever. (Level 3's uptick to 17.7% on a smaller base of 85 is worth a separate look — possibly senior employees nearing other career decisions rather than a compensation issue.)
+### Recommendation
 
-*Query: `GROUP BY stock_option_level` on `Fact_Employee`.*
+Evaluate broader stock option eligibility for Level 0 employees to strengthen long-term retention.
 
-## 5. Single employees attrite at 2x the rate of married employees
+---
 
-| Marital Status | Headcount | Attrition rate |
-|---|---|---|
+# 5️⃣ Marital status identifies high-risk workforce segments
+
+| Marital Status | Headcount | Attrition |
+|---------------|----------:|----------:|
 | Single | 470 | **25.5%** |
 | Married | 673 | 12.5% |
 | Divorced | 327 | 10.1% |
 
-**Recommendation:** This is a demographic correlation, not a lever HR can pull directly — but it's useful as a targeting signal. Combine with the overtime and tenure findings above: a single, first-year, no-stock-option employee is very plausibly the highest-risk profile in the workforce. Consider whether flexible scheduling or social/team-integration programs (often disproportionately valued by early-career, unmarried employees) are worth piloting.
+### Business Insight
 
-*Query: `GROUP BY marital_status` on `Fact_Employee`, joined via `Dim_MaritalStatus`.*
-
-## 6. Distance from home compounds the risk
-
-- 0-5 miles: 13.8% attrition
-- 6-15 miles: 16.1% attrition
-- 16+ miles: **20.7% attrition**
-
-**Recommendation:** Commute distance has a smaller but consistent effect. For roles where it's feasible, hybrid/remote flexibility for employees living 16+ miles away is a low-cost lever layered on top of the higher-priority items above.
-
-*Query: distance-band CTE against `Fact_Employee.distance_from_home`.*
-
-## 7. Role-level hotspot: Sales Representative
-
-- **39.8% attrition** (33 of 83 headcount) — the highest of any job role, well above the Sales department average (20.6%) that contains it.
-
-**Recommendation:** Treat this as a role-specific retention project distinct from the department-level Sales findings — whatever is driving Sales Executive (17.5%) attrition is not the same magnitude as what's driving Sales Representative attrition, so a department-wide fix would under-serve the group actually at risk.
-
-*Query: `department_analysis.sql`, Department x Job Role cut, `HAVING COUNT(*) >= 5`.*
+Marital status is not a controllable business factor, but it serves as a useful segmentation variable when combined with tenure, overtime, and compensation.
 
 ---
 
-## What this deliberately does not claim
+# 6️⃣ Longer commuting distance increases attrition
 
-Per `Business/BRD.md` Section 9 and `Architecture/DataArchitecture.md` Section 6, none of the above implies a time-series trend — there is no hire/termination date in the source, only tenure-in-years. "First-year attrition is highest" describes a cross-sectional tenure-band comparison, not a trend measured over calendar time. All figures are point-in-time snapshot statistics.
+| Distance From Home | Attrition |
+|-------------------|----------:|
+| 0–5 Miles | 13.8% |
+| 6–15 Miles | 16.1% |
+| 16+ Miles | **20.7%** |
+
+### Recommendation
+
+Where business operations permit:
+
+- Hybrid work
+- Flexible schedules
+- Remote work policies
+
+may improve employee retention.
+
+---
+
+# 7️⃣ Sales Representatives require focused retention initiatives
+
+## Highest Risk Job Role
+
+| Job Role | Attrition |
+|----------|----------:|
+| Sales Representative | **39.8%** |
+
+### Business Impact
+
+Although the Sales department has the highest departmental attrition, Sales Representatives experience substantially greater turnover than other roles within the department.
+
+### Recommendation
+
+Treat Sales Representatives as a dedicated retention program rather than applying department-wide initiatives.
+
+---
+
+# Strategic Recommendations
+
+Based on the complete analysis, HR leadership should prioritize the following initiatives:
+
+| Priority | Recommendation |
+|-----------|----------------|
+| High | Reduce sustained overtime |
+| High | Strengthen first-year onboarding |
+| High | Improve entry-level compensation and promotion pathways |
+| Medium | Expand stock option eligibility |
+| Medium | Introduce hybrid work for long-distance commuters |
+| Medium | Develop Sales Representative retention strategy |
+
+---
+
+# Important Notes
+
+The IBM HR Analytics dataset represents a **cross-sectional workforce snapshot**.
+
+Therefore:
+
+- No calendar-based trend analysis is performed.
+- No causal relationships are claimed.
+- Findings represent statistical associations only.
+- Recommendations should be validated using organizational data before implementation.
+
+---
+
+# SQL Traceability
+
+All findings presented in this document are reproducible using the SQL scripts included in this repository.
+
+- `views.sql`
+- `kpi_queries.sql`
+- `department_analysis.sql`
+- `attrition_deep_dive.sql`

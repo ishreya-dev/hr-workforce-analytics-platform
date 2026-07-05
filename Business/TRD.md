@@ -1,156 +1,629 @@
 # Technical Requirements Document (TRD)
 
-## 1. Functional Requirements
+**Project:** HR Attrition & Workforce Analytics Platform
 
-- **FR1:** Pipeline must ingest the raw 43-column source and produce a validated, cleaned dataset without adding or inferring any field not present in the source
-- **FR2:** SQL layer must reproduce every KPI shown in Power BI, queryable independently, using only fields present in the source (or fields derived purely from them)
-- **FR3:** Power BI must expose documented DAX measures for every visible KPI
-- **FR4:** Every visual must map to a documented business question from BRD Section 3
-- **FR5:** Any chart or narrative claim referencing a true calendar date/time-series trend must be flagged as unavailable-data rather than omitted silently
-- **FR6:** The pipeline must never write to or modify the raw source files. The existing Power BI and Tableau dashboards read directly from the raw files and must keep working unchanged. Pipeline only ever reads raw, writes processed
-- **FR7:** Pipeline must NOT attempt to reconcile against the 6 legacy `CF_*` Power Pivot calculated fields — these are out of scope. The pipeline computes its own canonical measures directly from `Attrition`
+**Version:** 1.0
 
-## 2. Non-Functional Requirements
+**Prepared By:** Shreya Kumari
 
-- **Reproducibility:** pipeline runs end-to-end from a clean clone with one command
-- **Transparency:** every transformation logged; no silent data changes
-- **Maintainability:** config-driven paths/constants, no hardcoded values in logic
-- **Portability:** SQL scripts runnable on SQLite (zero-install) or PostgreSQL
+**Document Type:** Technical Requirements Document
 
-## 3. Technology Stack
+**Status:** Final
 
-Python 3.11+ (pandas, openpyxl for the Excel source), SQLite/PostgreSQL, Power BI Desktop, Git/GitHub.
+---
 
-## 4. Data Sources
+# 1. Purpose
 
-Primary source: the `Data` sheet inside `Analytics/Excel/HR DATA_Excel.xlsx` (also duplicated in `HR Analytics Dashboard Excel Project.xlsx`, and mirrored as the `"HR data"` Power Query table inside the `.pbix`) — 1,470 rows, 44 raw columns (43 data fields + `emp no`), no nulls confirmed during profiling.
+This document defines the technical requirements, architecture, implementation standards, and system specifications for the HR Attrition & Workforce Analytics Platform.
 
-`Data/raw/hrdata.csv` (15 columns) is retained as a legacy derived extract — it is not re-derived from or reconciled against the 43-column source in this pipeline version; it remains untouched for the existing dashboards that still point at it (FR6).
+The solution transforms raw HR employee records into business intelligence through an automated Python ETL pipeline, a SQL dimensional data warehouse, and interactive Power BI dashboards.
 
-### 4.1 Identifier Resolution
+This document complements the Business Requirements Document (BRD) by describing how business requirements are implemented from a technical perspective.
 
-Three identifier-like fields exist across the sources:
+---
 
-| Field | Source | Format | Notes |
-|-------|--------|--------|-------|
-| `Employee Number` | 43-col source | Sequential int, gaps present (1, 2, 4, 5, 7, 8, 10...) | The source system's real identifier. Adopted as the surrogate key going forward |
-| `emp no` | 43-col source | String codes (`"STAFF-1"`, `"STAFF-2"`...) | Human-readable label derived from `Employee Number`; not used as a join key |
-| `emp_no` | `hrdata.csv` legacy extract | Sequential int, no gaps (10001–11470) | Row-position surrogate key (10000 + row_index), generated independently when the extract was created, unrelated to any real source identifier |
+# 2. System Overview
 
-**Verification method:** row-by-row comparison of `Age` and `Gender` between `hrdata.csv` and the 43-column source confirmed 100% positional alignment — i.e., row *N* in one file is the same employee as row *N* in the other, purely by file order, not by a shared key value. This is documented explicitly because it is fragile: if either file is ever independently re-sorted, this alignment breaks silently with no error raised.
+The platform consists of four major layers.
 
-**Decision:** the new pipeline is built entirely on `Employee Number` as PK. `emp_no` and its row-order dependency are not carried forward into the new schema.
+```
+Raw Dataset
 
-### 4.2 Verified Full Source Schema
+↓
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `Employee Number` | integer | Adopted PK. Gaps present in the sequence — this is expected and not an error |
-| `emp no` | string | `"STAFF-N"` label, cosmetic, not used as key |
-| `Age` | integer | |
-| `Attrition` | string | Yes/No — canonical attrition flag |
-| `Business Travel` | string | Non-Travel / Travel_Rarely / Travel_Frequently |
-| `Daily Rate` | integer | |
-| `Department` | string | Sales / R&D / HR |
-| `Distance From Home` | integer | |
-| `Education` | integer | 1–5 scale |
-| `Education Field` | string | |
-| `Employee Count` | integer | Constant = 1 — zero-variance, drop in cleaning |
-| `Environment Satisfaction` | integer | 1–4 scale |
-| `Gender` | string | Female / Male |
-| `Hourly Rate` | integer | |
-| `Job Involvement` | integer | 1–4 scale |
-| `Job Level` | integer | 1–5 |
-| `Job Role` | string | |
-| `Job Satisfaction` | integer | 1–4 scale |
-| `Marital Status` | string | Single / Married / Divorced |
-| `Monthly Income` | integer | Compensation field |
-| `Monthly Rate` | integer | |
-| `Num Companies Worked` | integer | |
-| `Over18` | string | Expected near-constant; profile and drop if confirmed zero-variance |
-| `Over Time` | string | Yes/No |
-| `Percent Salary Hike` | integer | |
-| `Performance Rating` | integer | |
-| `Relationship Satisfaction` | integer | 1–4 scale |
-| `Standard Hours` | integer | Expected near-constant; profile and drop if confirmed zero-variance |
-| `Stock Option Level` | integer | 0–3 |
-| `Total Working Years` | integer | |
-| `Training Times Last Year` | integer | |
-| `Work Life Balance` | integer | 1–4 scale |
-| `Years At Company` | integer | Tenure field |
-| `Years In Current Role` | integer | |
-| `Years Since Last Promotion` | integer | |
-| `Years With Curr Manager` | integer | |
-| `-2` | integer | Confirmed constant (single value, -2, across all rows) — junk, drop |
-| `0` | integer | Confirmed constant (single value, 0, across all rows) — junk, drop |
+Python ETL
 
-**Legacy calculated fields (Excel Power Pivot layer, NOT part of the modeled pipeline):** `CF_age band`, `CF_attrition label`, `CF_attrition count`, `CF_attrition counts`, `CF_attrition rate`, `CF_current Employee`. Documented here for completeness and to explain why they appear in the workbook, but per BRD Section 7/9 they are not cross-validated against or reproduced — the new pipeline computes its own measures from `Attrition` directly.
+↓
 
-## 5. ETL Requirements
+SQLite Data Warehouse
 
-- **Extract:** read the 43-column `Data` sheet from the Excel workbook as-is, no in-place edits
-- **Transform:** Python cleaning (drop constant/junk columns with logged reasons, validate categorical and numeric domains, standardize `Title Case With Spaces` column names to `snake_case`) + SQL modeling (dimension/fact)
-- **Load:** processed CSV feeds SQL staging; SQL views feed Power BI
+↓
 
-## 6. Data Modeling Requirements (Star Schema)
+Power BI Dashboard
+```
 
-`Fact_Employee` carries the measures:
+The system performs:
 
-- `Fact_Employee`: `employee_number` (PK), `DepartmentKey` (FK), `JobRoleKey` (FK), `EducationKey` (FK), `MaritalStatusKey` (FK), `age`, `gender`, `business_travel`, `job_satisfaction`, `environment_satisfaction`, `work_life_balance`, `job_involvement`, `relationship_satisfaction`, `performance_rating`, `job_level`, `monthly_income`, `daily_rate`, `hourly_rate`, `monthly_rate`, `percent_salary_hike`, `stock_option_level`, `over_time`, `total_working_years`, `years_at_company`, `years_in_current_role`, `years_since_last_promotion`, `years_with_curr_manager`, `num_companies_worked`, `distance_from_home`, `training_times_last_year`, `attrition`
-- `Dim_Department`: `DepartmentKey`, `DepartmentName`
-- `Dim_JobRole`: `JobRoleKey`, `JobRoleName`, `DepartmentKey`
-- `Dim_Education`: `EducationKey`, `EducationLevel` (raw 1–5 integer mapped to a label), `EducationField`
-- `Dim_MaritalStatus`: `MaritalStatusKey`, `MaritalStatusName`
+- Automated data ingestion
+- Data validation
+- Data cleaning
+- SQL dimensional modeling
+- KPI generation
+- Interactive visualization
 
-No `Dim_Date` — there is no date field of any kind in the source (confirmed unchanged after rebuild). Tenure fields (`Years At Company`, etc.) remain integer attributes on the fact table, not a time dimension.
+---
 
-`age_band` is no longer a raw source field in the 43-column data (it existed only in the legacy 15-column extract, likely derived from `CF_age band`) — it is recomputed by the pipeline from `Age` using documented bin boundaries, not treated as a source-provided field.
+# 3. Functional Requirements
 
-## 7. SQL Requirements
+| ID | Requirement |
+|----|-------------|
+| FR-01 | Import the complete HR dataset without modifying the original source. |
+| FR-02 | Validate data quality before processing. |
+| FR-03 | Produce a cleaned analytics-ready dataset. |
+| FR-04 | Build SQL Star Schema tables. |
+| FR-05 | Generate reusable SQL KPI Views. |
+| FR-06 | Ensure Power BI KPIs reconcile with SQL outputs. |
+| FR-07 | Support interactive dashboard filtering. |
+| FR-08 | Preserve raw source files throughout processing. |
+| FR-09 | Log every transformation performed by the ETL pipeline. |
+| FR-10 | Maintain deterministic processing for identical inputs. |
 
-DDL for the expanded fact/dimension tables above; KPI queries must use explicit, commented CTEs/window functions where relevant (e.g., `RANK() OVER (ORDER BY attrition_rate DESC)` for department ranking, and a new tenure-band or income-quartile CTE for the compensation/tenure KPIs); views layer is the canonical source Power BI numbers are checked against.
+---
 
-## 8. Python Requirements
+# 4. Non-Functional Requirements
 
-- Deterministic cleaning (same input always produces same output)
-- Validation checks specific to this schema:
-  - `Employee Number` uniqueness
-  - `Age` within a plausible working-age range (16–75)
-  - All 1–4/1–5 satisfaction-style scales within their documented bounds
-  - `Employee Count` is constant (confirms one-row-per-employee grain) before being dropped
-  - `Over18` and `Standard Hours` profiled for zero variance; dropped with logged reason if confirmed
-  - `-2` and `0` dropped with logged reason (confirmed constant, undocumented meaning)
-- No destructive operations without a logged rationale
-- No cross-validation against the legacy `CF_*` fields (FR7) — they are not read by the pipeline at all
+| Category | Requirement |
+|-----------|-------------|
+| Performance | ETL completes successfully on the full dataset. |
+| Reliability | Pipeline executes without data loss. |
+| Scalability | Modular architecture supports future enhancements. |
+| Maintainability | Configuration-driven implementation. |
+| Portability | SQL scripts support SQLite and PostgreSQL. |
+| Transparency | Every transformation is logged. |
+| Reproducibility | Complete pipeline executes from a fresh clone. |
 
-## 9. Power BI Requirements
+---
 
-**Status: not implemented — deliberate scope decision, not an oversight.** The `.pbix` is unchanged from the pre-rescope version: it still runs on the flat `HR data` table and the legacy `CF_age band` field, with no explicit named DAX measures and no star-schema relationships. This was audited directly against the live file (report layout JSON) and confirmed to reconcile correctly against the new SQL layer today (`Testing/kpi_reconciliation.md`) despite the implementation gap.
+# 5. Technology Stack
 
-The requirements below describe the target state **if** a Power BI rebuild is done in a future iteration — they are not a claim that this has been built.
+| Layer | Technology |
+|---------|------------|
+| Programming | Python 3.11+ |
+| Data Processing | Pandas, NumPy |
+| Excel Processing | openpyxl |
+| Database | SQLite |
+| SQL | ANSI SQL |
+| Dashboard | Microsoft Power BI |
+| Version Control | Git & GitHub |
+| Documentation | Markdown |
+| Testing | pytest |
 
-- All measures explicit and named (no bare implicit aggregations)
-- Data model relationships documented against Section 6
-- Visual layout unchanged from original except new tooltips/drill-throughs for compensation and tenure measures
+---
 
-## 10. Security
+# 6. Data Sources
 
-No real PII in this dataset (`Employee Number` is a surrogate key from a synthetic/open dataset). Still document as if it mattered — no credentials committed to the repo; `.gitignore` excludes any local `.env`/config secrets even though none are currently required.
+## Primary Dataset
 
-## 11. Error Handling
+| Attribute | Details |
+|------------|---------|
+| Dataset | IBM HR Analytics Employee Attrition |
+| Records | 1,470 |
+| Features | 43 |
+| Format | Excel |
+| PII | None |
 
-Python scripts fail loudly (raise, don't silently pass) on schema mismatches — e.g., if a future data refresh removes a column this pipeline depends on, the script should flag "missing expected column" rather than silently proceeding with a partial schema.
+Primary input:
 
-## 12. Logging
+```
+Analytics/Excel/HR DATA_Excel.xlsx
+```
 
-Every pipeline run logs: timestamp, row counts in/out, transformations applied, dropped-column rationale for each of `Employee Count`/`Over18`/`Standard Hours`/`-2`/`0`, and any validation failures.
+The ETL pipeline always reads from this file.
 
-## 13. Risks
+---
 
-- **Row-order fragility:** since the legacy `hrdata.csv` extract's row order was the only implicit link to the 43-column source, and the new pipeline no longer depends on that extract, this risk is retired going forward — but is documented here as the reason the pipeline was rebuilt on `Employee Number` rather than continuing to patch around `emp_no`
-- **Legacy artifact drift:** the 6 `CF_*` Power Pivot fields in the Excel workbook will silently diverge from the new pipeline's canonical measures over time since they are no longer touched. This is accepted per BRD Section 9 — the Excel workbook's Power Pivot layer is treated as a frozen legacy artifact, not a live component
-- Public/derived dataset may look generic without strong original documentation — mitigated by the BRD/TRD/architecture depth, not by the data itself
+## Legacy Dataset
 
-## 14. Deployment
+```
+Data/raw/hrdata.csv
+```
 
-Local-only for portfolio scope; a deployment guide documents exact reproduction steps (clone → install requirements → run pipeline → open PBIX).
+This file exists only for backward compatibility with legacy dashboards.
+
+It is **never modified** by the ETL pipeline.
+
+---
+
+# 7. Identifier Strategy
+
+Three identifier fields exist across the source files.
+
+| Field | Purpose |
+|---------|---------|
+| Employee Number | Primary Key |
+| emp no | Human-readable employee label |
+| emp_no | Legacy row-order identifier |
+
+### Design Decision
+
+The new analytics platform adopts **Employee Number** as the canonical primary key.
+
+Legacy identifiers are retained only for historical compatibility and are not used within the dimensional model.
+
+---
+# 8. Source Data Schema
+
+The HR Analytics dataset contains employee demographic, employment, compensation, satisfaction, and workforce information used throughout the analytics pipeline.
+
+## Dataset Summary
+
+| Attribute | Value |
+|------------|------:|
+| Total Records | 1,470 |
+| Employee Attributes | 43 |
+| Dataset Type | Structured HR Dataset |
+| Missing Values | None |
+| Primary Identifier | Employee Number |
+
+---
+
+## Core Employee Attributes
+
+| Category | Fields |
+|-----------|--------|
+| Employee | Employee Number, Age, Gender, Marital Status |
+| Organization | Department, Job Role, Job Level |
+| Compensation | Monthly Income, Daily Rate, Hourly Rate, Monthly Rate |
+| Employment | Total Working Years, Years At Company, Years In Current Role |
+| Satisfaction | Job Satisfaction, Environment Satisfaction, Relationship Satisfaction, Work Life Balance |
+| Performance | Performance Rating, Percent Salary Hike |
+| Workforce | Business Travel, Distance From Home, Over Time |
+| Education | Education, Education Field |
+| Benefits | Stock Option Level |
+| Attrition | Attrition |
+
+---
+
+## Removed During Data Cleaning
+
+The following columns are profiled and removed because they provide no analytical value.
+
+| Column | Reason |
+|----------|--------|
+| Employee Count | Constant value |
+| Over18 | Constant value |
+| Standard Hours | Constant value |
+| -2 | Undocumented constant field |
+| 0 | Undocumented constant field |
+
+These columns are removed during ETL and are fully documented within pipeline logs.
+
+---
+
+# 9. ETL Requirements
+
+The ETL pipeline transforms raw HR data into an analytics-ready dataset suitable for SQL reporting and Power BI visualization.
+
+---
+
+## Extract
+
+The extraction layer:
+
+- Reads the original Excel workbook.
+- Preserves the raw dataset.
+- Validates schema consistency.
+- Loads data into memory for preprocessing.
+
+Source:
+
+```
+Analytics/Excel/HR DATA_Excel.xlsx
+```
+
+---
+
+## Transform
+
+Transformation includes:
+
+- Missing value validation
+- Duplicate detection
+- Constant column identification
+- Invalid record detection
+- Column standardization
+- Data type validation
+- Feature preparation
+- Snake_case conversion
+
+No business information is inferred during transformation.
+
+---
+
+## Load
+
+The processed dataset is exported to:
+
+```
+Data/processed/
+```
+
+The cleaned dataset is then loaded into SQLite where the dimensional warehouse is created.
+
+---
+
+# 10. Data Validation Rules
+
+The pipeline validates every dataset before loading.
+
+| Validation | Rule |
+|------------|------|
+| Employee Number | Unique |
+| Age | 16–75 |
+| Satisfaction Scores | 1–4 |
+| Education Level | 1–5 |
+| Attrition | Yes / No |
+| Employee Count | Constant |
+| Stock Option Level | 0–3 |
+| Performance Rating | Valid Scale |
+
+Pipeline execution stops immediately if validation fails.
+
+---
+
+# 11. Data Cleaning Strategy
+
+The cleaning process follows deterministic rules to ensure reproducibility.
+
+### Standardization
+
+- Convert column names to snake_case
+- Remove unnecessary whitespace
+- Normalize categorical values
+
+---
+
+### Column Removal
+
+Columns with zero analytical value are removed.
+
+Examples include:
+
+- Employee Count
+- Over18
+- Standard Hours
+
+---
+
+### Data Integrity
+
+The pipeline never:
+
+- modifies source files
+- fabricates values
+- silently removes records
+- ignores validation failures
+
+---
+
+### Logging
+
+Every transformation is recorded including:
+
+- Timestamp
+- Rows processed
+- Columns removed
+- Validation status
+- Errors
+- Processing duration
+
+---
+
+# 12. Data Modeling Requirements
+
+The analytics platform implements a dimensional Star Schema.
+
+---
+
+## Fact Table
+
+### Fact_Employee
+
+Stores workforce metrics and employee measures.
+
+Example attributes include:
+
+- employee_number
+- department_key
+- job_role_key
+- education_key
+- marital_status_key
+- age
+- gender
+- monthly_income
+- attrition
+- years_at_company
+- total_working_years
+- job_satisfaction
+- work_life_balance
+- environment_satisfaction
+- performance_rating
+- over_time
+- stock_option_level
+
+---
+
+## Dimension Tables
+
+| Dimension | Description |
+|------------|-------------|
+| Dim_Department | Department information |
+| Dim_JobRole | Employee job roles |
+| Dim_Education | Education level & field |
+| Dim_MaritalStatus | Marital status |
+| Dim_BusinessTravel | Travel frequency |
+
+---
+
+## Design Principles
+
+The Star Schema is designed to:
+
+- Reduce query complexity.
+- Improve dashboard performance.
+- Enable reusable SQL views.
+- Support scalable reporting.
+- Simplify Power BI relationships.
+
+---
+
+## Design Decisions
+
+### No Date Dimension
+
+The dataset contains no calendar dates.
+
+Therefore:
+
+- No Date Dimension exists.
+- No Time Intelligence calculations are implemented.
+- Tenure remains a descriptive employee attribute rather than a date hierarchy.
+
+---
+
+### Age Bands
+
+Age bands are generated during ETL using documented business rules.
+
+They are not stored within the original dataset.
+
+---
+
+# 13. SQL Layer
+
+The SQL layer serves as the analytical foundation of the platform. It transforms the cleaned HR dataset into a dimensional data warehouse and provides reusable SQL views for reporting and dashboard consumption.
+
+---
+
+## SQL Components
+
+| Component | Purpose |
+|-----------|---------|
+| `schema.sql` | Creates the dimensional database schema |
+| `load.sql` | Loads processed data into staging and fact/dimension tables |
+| `views.sql` | Creates reusable analytical SQL views |
+| `kpi_queries.sql` | Calculates workforce KPIs |
+| `department_analysis.sql` | Department-level workforce analysis |
+| `attrition_deep_dive.sql` | Detailed employee attrition analysis |
+
+---
+
+## SQL Responsibilities
+
+The SQL layer is responsible for:
+
+- Building the Star Schema
+- Creating Fact and Dimension tables
+- Loading cleaned employee data
+- Generating reusable business KPIs
+- Supporting Power BI reporting
+- Maintaining a single source of truth for analytical calculations
+
+---
+
+## SQL Design Principles
+
+- Explicit SQL queries
+- Readable Common Table Expressions (CTEs)
+- Modular analytical views
+- Reusable KPI calculations
+- Standardized naming conventions
+
+---
+
+# 14. Python ETL Layer
+
+Python automates the complete preprocessing workflow before data is loaded into the analytical database.
+
+---
+
+## ETL Responsibilities
+
+The ETL pipeline performs:
+
+- Data ingestion
+- Data profiling
+- Schema validation
+- Data cleaning
+- Feature preparation
+- Data transformation
+- Process logging
+- Export to SQL staging
+
+---
+
+## Validation Rules
+
+The pipeline validates:
+
+- Employee Number uniqueness
+- Age range (16–75)
+- Satisfaction score limits
+- Education scale (1–5)
+- Performance Rating scale
+- Employee Count consistency
+- Constant-value columns
+- Duplicate records
+
+---
+
+## Processing Rules
+
+The ETL pipeline:
+
+- Never modifies the original dataset.
+- Never fabricates missing information.
+- Removes only documented constant fields.
+- Records every transformation.
+- Produces deterministic output for identical inputs.
+
+---
+
+## Output
+
+The ETL pipeline generates:
+
+```
+Processed Dataset
+
+↓
+
+SQLite Database
+
+↓
+
+Fact Tables
+
+↓
+
+Dimension Tables
+
+↓
+
+SQL Views
+```
+
+---
+
+# 15. Power BI Layer
+
+Power BI serves as the presentation layer of the analytics platform and provides interactive dashboards for workforce analysis.
+
+---
+
+## Dashboard Objectives
+
+The dashboard enables HR stakeholders to:
+
+- Monitor workforce KPIs
+- Analyze employee attrition
+- Explore workforce demographics
+- Identify high-risk employee groups
+- Support strategic HR decision-making
+
+---
+
+## Dashboard Pages
+
+The report contains multiple analytical views, including:
+
+- Executive Workforce Dashboard
+- Education-Level Analysis
+- Department Analysis
+- Employee Demographics
+- Attrition Analysis
+- KPI Summary
+
+---
+
+## Dashboard Features
+
+- Interactive slicers
+- Dynamic KPI cards
+- Cross-filtering
+- Responsive visualizations
+- Drill-down reporting
+- Education-level filtering
+
+---
+
+## Key Measures
+
+The dashboard includes measures such as:
+
+- Employee Count
+- Active Employees
+- Attrition Count
+- Attrition Rate
+- Average Age
+- Average Monthly Income
+- Average Job Satisfaction
+- Average Years at Company
+
+---
+
+## Validation
+
+Dashboard KPIs are validated against the SQL analytical layer to ensure consistency between SQL outputs and Power BI visualizations.
+
+---
+
+# 16. Security
+
+Although the dataset is synthetic and contains no Personally Identifiable Information (PII), enterprise development practices are followed.
+
+Security measures include:
+
+- Raw data is preserved as read-only.
+- Sensitive configuration files are excluded using `.gitignore`.
+- No credentials are stored in the repository.
+- Pipeline operates only on local processed datasets.
+- Source data remains unchanged throughout processing.
+
+---
+
+# 17. Error Handling
+
+The platform follows a fail-fast strategy.
+
+If unexpected conditions occur, execution stops immediately and provides descriptive error messages.
+
+Examples include:
+
+- Missing required columns
+- Duplicate primary keys
+- Invalid categorical values
+- Invalid numerical ranges
+- Schema mismatches
+- File access failures
+
+No silent failures are permitted.
+
+---
+
+# 18. Logging & Monitoring
+
+Each pipeline execution records:
+
+- Execution timestamp
+- Input row count
+- Output row count
+- Processing duration
+- Validation status
+- Removed columns
+- Transformation summary
+- Error details (if applicable)
+
+These logs improve reproducibility and simplify troubleshooting.
+
+---

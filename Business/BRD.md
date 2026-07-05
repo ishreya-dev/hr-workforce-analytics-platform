@@ -1,70 +1,263 @@
 # Business Requirements Document (BRD)
 
-## 1. Stakeholder
+**Project:** HR Attrition & Workforce Analytics Platform
 
-HR Director, VitalCore Manufacturing (1,470 employees)
+**Version:** 1.0
 
-## 2. Business Problem
+**Prepared By:** Shreya Kumari
 
-Leadership lacks a consolidated view of where and among whom attrition is concentrated — including whether pay, tenure, and workload factors are contributing. HR currently reacts to resignations rather than identifying at-risk segments proactively. Turnover carries direct cost (recruiting, onboarding) and indirect cost (team disruption, knowledge loss).
+**Document Type:** Business Requirements Document (BRD)
 
-## 3. Business Questions
+**Status:** Final
 
-- What is our current attrition rate, overall and by department?
-- Which employee segments (department, job role, education field, age band, marital status, travel frequency, overtime status) show elevated attrition?
-- Is job satisfaction, work-life balance, or environment satisfaction associated with attrition in any segment?
-- Is there a relationship between compensation (monthly income) and attrition, controlling for job level/role?
-- Do tenure signals (years at company, years in current role, years since last promotion) show a "flight risk" pattern?
-- Does overtime status correlate with attrition?
-- Where should retention investment be prioritized given limited HR budget?
+---
 
-## 4. Data Source
+# 1. Executive Summary
 
-Primary source: the `Data` sheet inside `Analytics/Excel/HR DATA_Excel.xlsx` (1,470 rows, 44 raw columns: 43 data fields + `emp no`). The dataset is the IBM HR Analytics Employee Attrition dataset (synthetic, no real PII).
+Employee attrition significantly impacts organizational productivity, operational continuity, and recruitment costs. Human Resource teams require timely insights into workforce trends to improve employee retention and support strategic workforce planning.
 
-`Data/raw/hrdata.csv` (15 columns) is a legacy derived extract retained for existing dashboards that still reference it. It is not an input to the current pipeline.
+This project delivers an enterprise HR Analytics platform that transforms raw employee data into actionable business intelligence through automated data processing, SQL-based analytical modeling, and interactive Power BI dashboards.
 
-## 5. KPIs
+The solution enables HR stakeholders to monitor workforce composition, identify attrition patterns, analyze employee demographics, and support evidence-based decision-making.
 
-- Attrition Rate (overall and by segment)
-- Total Headcount
+---
+
+# 2. Business Problem
+
+HR departments often rely on fragmented spreadsheets and static reports that make it difficult to identify workforce trends or understand the primary drivers of employee attrition.
+
+Without centralized analytics, organizations struggle to:
+
+- Monitor workforce health across departments.
+- Identify high-risk employee groups.
+- Measure employee satisfaction effectively.
+- Understand relationships between compensation, tenure, and attrition.
+- Prioritize retention initiatives using objective data.
+
+As a result, HR teams frequently respond to employee resignations after they occur rather than proactively addressing retention risks.
+
+---
+
+# 3. Business Objectives
+
+The project aims to:
+
+- Provide a centralized workforce analytics dashboard.
+- Monitor employee attrition across multiple workforce dimensions.
+- Improve HR reporting through automated analytics.
+- Enable data-driven retention planning.
+- Reduce manual reporting effort.
+- Deliver actionable business insights for HR leadership.
+
+---
+
+# 4. Stakeholders
+
+| Stakeholder | Responsibility |
+|-------------|----------------|
+| HR Director | Strategic workforce planning and decision-making |
+| HR Business Partner | Employee engagement and retention initiatives |
+| Department Managers | Monitor workforce performance and attrition |
+| Executive Leadership | Business performance monitoring |
+| HR Analytics Team | Dashboard maintenance and reporting |
+
+---
+
+# 5. Business Questions
+
+The dashboard is designed to answer the following business questions:
+
+### Workforce Overview
+
+- What is the current workforce size?
+- What is the overall employee attrition rate?
+- Which departments employ the largest workforce?
+
+### Attrition Analysis
+
+- Which departments experience the highest attrition?
+- Which job roles have the greatest turnover?
+- Which employee segments are most at risk?
+
+### Workforce Demographics
+
+- How is the workforce distributed by gender?
+- How does education level impact attrition?
+- Which age groups exhibit higher turnover?
+
+### Employee Experience
+
+- Does job satisfaction influence attrition?
+- Does work-life balance affect employee retention?
+- Does overtime contribute to employee turnover?
+
+### Compensation & Tenure
+
+- Is monthly income associated with attrition?
+- Does employee tenure impact retention?
+- How does promotion history relate to employee turnover?
+
+---
+
+# 6. Scope
+
+## In Scope
+
+- HR workforce analytics
+- Employee attrition reporting
+- Workforce demographic analysis
+- SQL KPI generation
+- Power BI dashboard development
+- Python ETL pipeline
+- Data quality validation
+- Executive reporting
+
+---
+
+## Out of Scope
+
+- Machine Learning prediction models
+- Real-time HRIS integration
+- Live data streaming
+- Payroll processing
+- Employee performance evaluation
+- Calendar-based trend analysis
+- Power BI Service deployment
+
+---
+
+# 7. Data Source
+
+| Attribute | Details |
+|------------|---------|
+| Dataset | IBM HR Analytics Employee Attrition |
+| Source | Kaggle |
+| Records | 1,470 Employees |
+| Features | 43 Employee Attributes |
+| Dataset Type | Synthetic |
+| Personally Identifiable Information | None |
+
+Primary source:
+
+```
+Analytics/Excel/HR DATA_Excel.xlsx
+```
+
+The project uses the complete HR dataset as the authoritative source for ETL, SQL modeling, and dashboard reporting.
+
+---
+
+# 8. Functional Requirements
+
+The solution shall:
+
+- Import HR data from Excel.
+- Validate and clean employee records.
+- Generate processed datasets.
+- Build a dimensional SQL database.
+- Calculate workforce KPIs.
+- Provide reusable SQL analytical views.
+- Support interactive Power BI dashboards.
+- Enable dynamic filtering across workforce dimensions.
+
+---
+
+# 9. Non-Functional Requirements
+
+| Category | Requirement |
+|-----------|-------------|
+| Performance | Dashboard loads within acceptable response time |
+| Reliability | ETL pipeline completes without data loss |
+| Scalability | Modular pipeline supports future enhancements |
+| Maintainability | Well-documented and reusable code |
+| Security | No sensitive employee information stored |
+| Usability | Dashboard suitable for non-technical users |
+
+---
+
+# 10. Business KPIs
+
+The platform measures:
+
+- Total Employees
 - Active Employees
+- Attrition Count
+- Attrition Rate
 - Average Age
-- Job Satisfaction Index
-- Work-Life Balance Index
-- Environment Satisfaction Index
-- Average Monthly Income (overall, by department, by job level)
-- Average Tenure (Years At Company)
-- Overtime Attrition Gap (attrition rate for OverTime=Yes vs. No)
-- Department Attrition Rank
-- Low-Satisfaction Share (employees reporting satisfaction ≤ 2)
+- Average Monthly Income
+- Average Years at Company
+- Department-wise Attrition
+- Job Role Attrition
+- Overtime Attrition
+- Job Satisfaction
+- Work-Life Balance
+- Environment Satisfaction
 
-## 6. Success Criteria
+---
 
-- Dashboard reconciles exactly with underlying SQL calculations (zero variance)
-- At least 5 quantified, actionable recommendations delivered alongside the dashboard
-- A non-technical stakeholder can navigate the dashboard and identify the top attrition-associated segment within 2 minutes
-- At least one recommendation draws on compensation or tenure data
+# 11. Assumptions
 
-## 7. Assumptions
+- The dataset represents a single workforce snapshot.
+- Attrition is represented by a single authoritative field.
+- Employee Number acts as the unique employee identifier.
+- Calendar-based trend analysis is not supported.
+- Data quality is sufficient after ETL validation.
+- No real employee information exists within the dataset.
 
-- Data represents a single point-in-time snapshot, not a continuous HR system feed
-- `Attrition` is the single canonical attrition flag. The 6 legacy Power Pivot calculated fields (`CF_*`) from the original Excel workbook are documented as retired artifacts and are not carried into the new pipeline
-- `Employee Count` is a constant field (always 1) and carries no analytical value beyond confirming one row per employee
-- `emp_no` (from the legacy 15-column extract) is a row-position-based surrogate key (10000 + row index), independent of `Employee Number`. The new pipeline uses `Employee Number` directly as the surrogate key
-- `-2` and `0` are junk/placeholder columns with no documented meaning, dropped during cleaning
-- `Over18` and `Standard Hours` are near-constant fields, profiled and dropped if confirmed zero-variance
-- No calendar date field exists in this source, so no claim implies a true time-series trend; tenure fields are treated as snapshot attributes
+---
 
-## 8. Constraints
+# 12. Constraints
 
-- No live data connection (static file source)
-- No PII beyond what's already de-identified in the source file (`Employee Number` is a surrogate key, not a real employee ID)
+- Static Excel data source.
+- No live database connection.
+- Synthetic dataset only.
+- Historical employee events unavailable.
+- No predictive analytics included.
 
-## 9. Out of Scope
+---
 
-- Predictive/ML attrition modeling
-- Real-time data refresh
-- Integration with an actual HRIS
-- Any KPI or chart implying a true calendar time-series trend (no hire/termination dates exist in this source)
-- Reconciliation against the 6 legacy Power Pivot calculated fields (`CF_*`)
+# 13. Success Criteria
+
+The project will be considered successful when:
+
+- Dashboard KPIs reconcile with SQL outputs.
+- HR stakeholders can identify key attrition drivers.
+- Interactive dashboards support executive reporting.
+- At least five actionable business insights are produced.
+- ETL pipeline executes successfully without manual intervention.
+
+---
+
+# 14. Deliverables
+
+- Python ETL Pipeline
+- SQL Star Schema
+- SQLite Database
+- SQL KPI Views
+- Power BI Dashboard
+- Business Requirements Document
+- Technical Requirements Document
+- High-Level Design
+- Low-Level Design
+- Data Architecture Documentation
+
+---
+
+# 15. Risks
+
+- Dataset does not represent live organizational data.
+- No historical events available for trend analysis.
+- Insights are limited by available workforce attributes.
+- Dashboard conclusions depend on data quality.
+
+---
+
+# 16. Approval
+
+| Role | Status |
+|------|--------|
+| Business Owner | Approved |
+| Technical Lead | Approved |
+| Project Owner | Approved |
+
+---

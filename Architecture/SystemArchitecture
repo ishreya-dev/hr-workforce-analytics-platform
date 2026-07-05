@@ -1,74 +1,387 @@
-# System Architecture
-**Project:** HR Attrition & Workforce Analytics Dashboard
-**Related documents:** `HLD.md`, `LLD.md`, `DataArchitecture.md`
+# Technical Architecture Decisions
+
+**Project:** HR Attrition & Workforce Analytics Platform
+
+**Version:** 1.0
+
+**Document Type:** Architecture Decision Record (ADR)
+
+**Status:** Final
 
 ---
 
-## 1. Purpose
+# 1. Purpose
 
-This document captures *why* the system is built the way it is — the technology choices and the trade-offs behind them. Where the HLD/LLD describe the system, this document defends it.
+This document explains the key architectural decisions made during the design and implementation of the HR Attrition & Workforce Analytics Platform.
+
+Unlike the High-Level Design (HLD), Low-Level Design (LLD), and Data Architecture documents—which describe **how** the system works—this document explains **why** specific technologies, patterns, and design approaches were selected.
+
+The objective is to document architectural trade-offs, design constraints, and future scalability considerations.
+
 ---
 
-## 2. System Boundary
+# 2. System Scope
 
-This is a **single-analyst, local-execution, batch-processing system**. It is not a live service, not multi-user, and has no orchestration layer. That boundary is intentional — see Section 5.
+The platform is designed as a **local, batch-oriented Business Intelligence solution**.
 
+It is intended for portfolio demonstration and analytical reporting rather than continuous production operations.
+
+### System Boundary
+
+```mermaid
+flowchart LR
+
+A[Raw HR Dataset]
+
+B[Python ETL]
+
+C[SQLite Warehouse]
+
+D[Power BI Dashboard]
+
+E[Business Reports]
+
+F[HR Stakeholders]
+
+A --> B
+B --> C
+C --> D
+D --> E
+E --> F
 ```
-                     ┌─────────────────────────────────────┐
-                     │           System Boundary            │
-                     │                                       │
-   hrdata.csv ───▶  │  Python → SQL → Power BI → Reports   │  ───▶ Analyst / Stakeholder
-                     │                                       │
-                     └─────────────────────────────────────┘
+
+Within the current scope:
+
+- No external APIs
+- No cloud infrastructure
+- No scheduled execution
+- No streaming data
+- No multi-user architecture
+
+All processing occurs locally against a static HR dataset.
+
+---
+
+# 3. Architecture Principles
+
+The platform follows several guiding principles.
+
+### Simplicity
+
+The solution minimizes unnecessary complexity while maintaining enterprise design practices.
+
+---
+
+### Reproducibility
+
+All analytical outputs can be reproduced from the original dataset through deterministic ETL and SQL processing.
+
+---
+
+### Modularity
+
+Python, SQL, and Power BI responsibilities are separated into independent layers to improve maintainability.
+
+---
+
+### Single Source of Truth
+
+Business KPIs are generated within the SQL analytical layer and validated before visualization.
+
+---
+
+### Documentation First
+
+Every architectural decision is supported by technical documentation, ensuring maintainability and transparency.
+
+---
+
+# 4. Architecture Decisions
+
+## Decision 1 — Python for ETL
+
+### Decision
+
+Python is used for data cleaning and preprocessing.
+
+### Rationale
+
+Python provides:
+
+- Automated workflows
+- Version-controlled transformations
+- Comprehensive validation
+- Reproducible processing
+- Strong data manipulation capabilities
+
+Compared to manual spreadsheet editing, Python significantly improves maintainability and auditability.
+
+---
+
+## Decision 2 — SQL as the Analytics Layer
+
+### Decision
+
+Business KPIs are calculated using SQL before visualization.
+
+### Rationale
+
+Separating SQL analytics from Power BI provides:
+
+- Reusable KPI logic
+- Independent validation
+- Reduced dashboard complexity
+- Improved maintainability
+- Vendor-independent analytical processing
+
+SQL serves as the authoritative analytical layer for all workforce metrics.
+
+---
+
+## Decision 3 — Power BI for Visualization
+
+### Decision
+
+Power BI is the primary reporting platform.
+
+### Rationale
+
+Power BI offers:
+
+- Interactive dashboards
+- Enterprise adoption
+- Strong Microsoft ecosystem integration
+- Dynamic filtering
+- Executive reporting capabilities
+
+The dashboard focuses on communicating insights rather than performing complex business calculations.
+
+---
+---
+
+## Decision 4 — SQLite for Local Development
+
+### Decision
+
+SQLite is used as the analytical database during development.
+
+### Rationale
+
+SQLite was selected because it:
+
+- Requires zero server installation.
+- Is lightweight and portable.
+- Supports standard ANSI SQL.
+- Is sufficient for the project dataset (~1,470 records).
+- Simplifies repository setup for reviewers.
+
+Although lightweight, the SQL implementation has been written using standard SQL practices to simplify migration to enterprise databases such as PostgreSQL, SQL Server, or Azure SQL.
+
+---
+
+## Decision 5 — Star Schema Data Model
+
+### Decision
+
+The analytical database implements a dimensional Star Schema.
+
+### Rationale
+
+A Star Schema provides:
+
+- Simplified analytical queries
+- Improved dashboard performance
+- Clear separation between facts and dimensions
+- Better compatibility with Power BI
+- Easier KPI development
+
+The model consists of one central Fact table surrounded by reusable Dimension tables.
+
+---
+
+## Decision 6 — No Date Dimension
+
+### Decision
+
+A Date Dimension is intentionally excluded.
+
+### Rationale
+
+The source dataset does not contain:
+
+- Hire Date
+- Termination Date
+- Promotion Date
+- Review Date
+- Calendar Events
+
+Introducing a synthetic Date Dimension would create unsupported business logic and misleading analytical capabilities.
+
+Instead, tenure-related fields remain descriptive employee attributes.
+
+---
+
+## Decision 7 — Batch Processing
+
+### Decision
+
+The ETL pipeline executes manually rather than through scheduled orchestration.
+
+### Rationale
+
+Current project scope includes:
+
+- Static dataset
+- Manual execution
+- Portfolio demonstration
+
+Scheduling technologies such as Airflow, Azure Data Factory, or dbt Cloud would increase system complexity without providing additional business value for the current scope.
+
+---
+
+## Decision 8 — Power BI as Presentation Layer
+
+### Decision
+
+Power BI is responsible only for visualization.
+
+### Rationale
+
+Business calculations are intentionally performed within the SQL layer.
+
+Power BI focuses on:
+
+- Interactive dashboards
+- KPI visualization
+- Cross-filtering
+- Executive reporting
+
+This separation prevents duplicated business logic across SQL and DAX.
+
+---
+
+# 5. Trade-Off Analysis
+
+| Decision | Benefit | Trade-Off |
+|----------|---------|-----------|
+| Python ETL | Flexible and reproducible | Requires Python runtime |
+| SQLite | Lightweight and portable | Not intended for enterprise-scale workloads |
+| Star Schema | High analytical performance | Additional modeling effort |
+| SQL KPI Layer | Centralized business logic | Additional SQL maintenance |
+| Manual Pipeline | Simplicity | No automated scheduling |
+| Local Execution | Easy setup | No collaborative deployment |
+
+---
+
+# 6. Enterprise-Scale Architecture
+
+If deployed in a production enterprise environment, the architecture could be extended as follows:
+
+```text
+HRIS (Workday / SAP SuccessFactors)
+
+↓
+
+Azure Data Factory / Airflow
+
+↓
+
+Azure SQL / Snowflake
+
+↓
+
+dbt Models
+
+↓
+
+Power BI Service
+
+↓
+
+Business Users
 ```
 
-No component inside this boundary calls out to an external live system, API, or database service — everything runs locally against a static file.
+Potential enterprise enhancements include:
+
+- Automated data ingestion
+- Incremental ETL processing
+- Cloud-hosted analytical warehouse
+- Scheduled pipeline execution
+- Power BI Service deployment
+- Row-Level Security (RLS)
+- CI/CD deployment pipelines
+- Automated KPI reconciliation
 
 ---
 
-## 3. Technology Decisions & Rationale
+# 7. Architecture Constraints
 
-### 3.1 Why Python for cleaning, not SQL-only or Excel?
-Python (pandas) gives reproducible, version-controlled, testable transformations with proper logging. Excel edits are invisible, unauditable, and not diffable in git. Doing all cleaning purely in SQL is possible, but pandas is faster to iterate on for the kind of exploratory profiling and validation logic this stage needs (e.g., quickly checking value distributions before deciding on a validation rule).
+The current implementation intentionally operates within the following constraints:
 
-### 3.2 Why a distinct SQL modeling layer, not just Power Query inside Power BI?
-Two reasons. First, it demonstrates transferable SQL skill independent of any single BI tool — a genuinely portable, in-demand skill. Second, and more importantly, it creates an **independent second calculation** of every KPI, which is what makes real reconciliation possible (see `Testing/`). If cleaning and KPI logic only existed inside Power Query, there would be nothing outside Power BI to check its numbers against.
+| Constraint | Reason |
+|------------|--------|
+| Static HR dataset | No live HRIS connection available |
+| Local execution | Portfolio project scope |
+| Single-user workflow | Demonstration environment |
+| Batch processing | No continuous data updates |
+| Snapshot analytics | Dataset contains no historical dates |
 
-### 3.3 Why Power BI as the primary visualization tool, not Tableau?
-Power BI has meaningfully higher enterprise adoption at Big 4-type consulting clients and integrates natively with the Microsoft data stack these firms typically standardize on (Azure, Excel, SharePoint, Fabric). Tableau is retained in the repository to demonstrate tool range, but is explicitly framed as secondary — the project deliberately avoids having two "primary" dashboards that could quietly drift out of sync with each other.
-
-### 3.4 Why keep the existing dashboard layout rather than redesign it?
-This was a stated project constraint, but it also mirrors a genuinely common real-world scenario: inheriting and extending someone else's BI asset rather than always starting from a blank canvas. Demonstrating the discipline to add value *without* unnecessarily rebuilding something that already works is itself a signal worth showing a reviewer.
-
-### 3.5 Why SQLite for development instead of a full PostgreSQL/cloud database?
-Zero-install, fully portable, and sufficient for this data volume (~1,470 rows). All SQL is written to be PostgreSQL-compatible so the same scripts would run against a real production database with minimal changes — this is stated explicitly so it doesn't read as a skill gap, but as a scoping decision appropriate to a local portfolio project.
-
-### 3.6 Why no orchestration tool (e.g., Airflow, dbt)?
-The pipeline runs once per analysis cycle, triggered manually by the analyst — it is not a continuously refreshing production system. Introducing orchestration tooling here would add complexity without a corresponding real need, which is its own kind of bad engineering judgment. The "what I'd add at real scale" answer (Section 4) exists specifically so this isn't mistaken for a skill gap either.
+These constraints are design choices based on project scope rather than technical limitations.
 
 ---
 
-## 4. What Would Change at Real Enterprise Scale
+# 8. Future Architecture Roadmap
 
+Potential future enhancements include:
 
-- A live HRIS connection (e.g., Workday, SAP SuccessFactors API) instead of a static CSV extract
-- A proper data warehouse (Snowflake, BigQuery, or Azure Synapse/Fabric) instead of SQLite
-- An orchestration layer (Airflow, dbt, or Azure Data Factory) to schedule and monitor pipeline runs
-- A `Dim_Date` and SCD Type 2 logic on department/role dimensions, enabled by real historical data (see `DataArchitecture.md` Section 6)
-- Automated *reconciliation* checks (not just unit tests) integrated into CI — a
-  basic GitHub Actions workflow now runs `pytest tests/` on every push/PR
-  (`.github/workflows/tests.yml`), but it doesn't yet run the full pipeline
-  end-to-end against the real Excel source or diff `Testing/kpi_reconciliation.md`
-  automatically; that's the remaining gap at real enterprise scale.
-- Row-level security in Power BI if the dashboard were to be shared across department managers who should only see their own department's data
+### Data Engineering
+
+- Azure Data Factory integration
+- Apache Airflow scheduling
+- Incremental ETL pipelines
+- Data quality monitoring
 
 ---
 
-## 5. Deliberate Scope Boundaries (recap)
+### Database
 
-| In Scope | Out of Scope | Why |
-|---|---|---|
-| Batch, manual pipeline execution | Live/scheduled refresh | No live data source exists to refresh from |
-| Descriptive + light diagnostic analytics | Predictive/ML attrition modeling | Explicitly out of scope per `BRD.md`; would dilute focus from the core engineering/documentation gap being addressed |
-| Single-source static data | Multi-source integration | Only one dataset exists in this project's scope |
-| Local execution | Cloud hosting/deployment | Portfolio project scope, not a staffed production engagement |
+- Azure SQL Database
+- PostgreSQL
+- Snowflake
+- Microsoft Fabric Warehouse
+
+---
+
+### Business Intelligence
+
+- Power BI Service deployment
+- Row-Level Security (RLS)
+- Scheduled refresh
+- Executive scorecards
+- Mobile dashboards
+
+---
+
+### Advanced Analytics
+
+- Predictive Attrition Modeling
+- Employee Risk Scoring
+- Workforce Forecasting
+- Retention Recommendation Engine
+
+---
+
+# 9. Architecture Summary
+
+The architecture emphasizes:
+
+- Simplicity
+- Maintainability
+- Reproducibility
+- Modularity
+- Performance
+- Business alignment
+
+The solution demonstrates an end-to-end analytics workflow covering data engineering, dimensional modeling, SQL analytics, and interactive business intelligence while remaining appropriately scoped for a portfolio project.
+
+---
