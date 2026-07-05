@@ -1,189 +1,712 @@
-# HR Workforce Analytics Platform
+<div align="center">
 
-End-to-end workforce analytics platform that transforms raw HR data into actionable business insights through an automated Python ETL pipeline, SQL dimensional modeling, and interactive Power BI dashboards.
+# 📊 HR Attrition & Workforce Analytics Platform
 
-**Tech Stack:** Python • SQL • SQLite • Power BI • Excel • Pytest • GitHub Actions
+### Enterprise Workforce Intelligence using Python • SQL • Power BI
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![SQLite](https://img.shields.io/badge/SQLite-3.40%2B-green)
-![PowerBI](https://img.shields.io/badge/Power_BI-Desktop-red)
-![Tests](https://img.shields.io/badge/Tests-65_Passed-success)
-![Coverage](https://img.shields.io/badge/Coverage-80.9%25-success)
-![CI](https://img.shields.io/badge/CI-GitHub_Actions-success)
-![License](https://img.shields.io/badge/license-MIT-orange)
+Transforming employee data into actionable workforce intelligence through automated ETL pipelines, dimensional SQL modeling, and interactive Power BI dashboards.
 
-<img width="1847" height="882" alt="Screenshot 2026-07-04 171125" src="https://github.com/user-attachments/assets/34ef32bf-03bd-41fb-85d5-206d7d742a91" />
+<br>
 
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Power BI](https://img.shields.io/badge/Power_BI-F2C811?style=for-the-badge&logo=powerbi&logoColor=black)
+![SQL](https://img.shields.io/badge/SQL-Star%20Schema-336791?style=for-the-badge)
+![MIT License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
 
-## Features
+</div>
 
-- Automated Python ETL pipeline with profiling and validation
-- SQL star schema with governed KPI views
-- Interactive Power BI dashboard
-- KPI reconciliation against the raw source
-- Unit and integration test suite (pytest)
-- GitHub Actions CI on every push/PR
-- Full technical documentation (BRD, TRD, HLD, LLD, data architecture)
+---
 
-## Data Source
+## 📖 Overview
 
-[IBM HR Analytics Employee Attrition dataset](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) (1,470 employees, synthetic — no real PII). Uses the full 43-column version of the dataset.
+This project demonstrates the complete lifecycle of an enterprise HR analytics solution—from raw employee records to executive-level business intelligence.
 
-## Pipeline
+The solution combines **Python**, **SQL**, and **Power BI** to automate data preparation, implement a dimensional data warehouse, calculate workforce KPIs, and deliver interactive dashboards that help HR teams monitor employee attrition, workforce demographics, job satisfaction, and organizational trends.
 
+Unlike a standalone Power BI dashboard, this repository showcases the entire analytics engineering workflow including:
+
+- Automated Python ETL pipeline
+- Data validation & preprocessing
+- SQL Star Schema implementation
+- Business KPI generation
+- Interactive Power BI reporting
+- Business & technical documentation
+- Testing and quality assurance
+
+---
+
+## 📌 Project Snapshot
+
+| Metric | Value |
+|---------|------:|
+| Employees Analyzed | **1,470** |
+| Dataset Attributes | **43** |
+| Dashboard Pages | **6** |
+| Business KPIs | **25+** |
+| SQL Views | **10+** |
+| ETL Language | **Python** |
+| Database | **SQLite** |
+| Visualization | **Power BI** |
+
+---
+
+# 📷 Dashboard Gallery
+
+The Power BI solution provides multiple interactive dashboard views for workforce analysis. Users can dynamically filter employees by education level while monitoring workforce KPIs, demographics, and attrition patterns.
+
+## Executive Workforce Dashboard
+
+<p align="center">
+<img src="assets/dashboard/executive_dashboard.png" width="900">
+</p>
+
+---
+
+## Education-Level Workforce Analysis
+
+<table>
+<tr>
+<td align="center">
+
+### Associate Degree
+
+<img src="assets/associate_degree.png" width="430">
+
+</td>
+
+<td align="center">
+
+### Bachelor's Degree
+
+<img src="assets/bachelors_degree.png" width="430">
+
+</td>
+</tr>
+
+<tr>
+<td align="center">
+
+### Doctoral Degree
+
+<img src="assets/doctoral_degree.png" width="430">
+
+</td>
+
+<td align="center">
+
+### High School
+
+<img src="assets/high_school.png" width="430">
+
+</td>
+</tr>
+
+<tr>
+<td colspan="2" align="center">
+
+### Master's Degree
+
+<img src="assets/masters_degree.png" width="430">
+
+</td>
+</tr>
+</table>
+
+---
+
+# 🎥 Interactive Dashboard Walkthrough
+
+The project includes a complete walkthrough demonstrating dashboard navigation, KPI interactions, dynamic slicers, and business insights.
+
+<p align="center">
+<img src="assets/HRProject.gif" width="900">
+</p>
+
+---
+# 🎯 Business Problem
+
+Human Resource teams often rely on static reports and spreadsheets that make it difficult to monitor workforce health, identify attrition trends, and understand employee demographics in real time.
+
+Without centralized analytics, organizations face challenges such as:
+
+- Identifying departments with high employee turnover.
+- Understanding the impact of education, age, and gender on attrition.
+- Tracking workforce composition across business units.
+- Measuring employee satisfaction and retention indicators.
+- Delivering timely, data-driven insights to HR leadership.
+
+This project addresses these challenges by building an end-to-end HR analytics platform that automates data preparation, structures information into a dimensional data model, and delivers interactive Power BI dashboards for executive decision-making.
+
+---
+
+# 🎯 Project Objectives
+
+The primary objectives of this project are to:
+
+- Automate HR data cleaning and validation using Python.
+- Build a scalable SQL Star Schema for analytical reporting.
+- Develop reusable SQL views for business KPIs.
+- Design an interactive Power BI dashboard for workforce monitoring.
+- Enable HR leaders to identify attrition patterns and workforce trends.
+- Demonstrate an end-to-end Business Intelligence workflow suitable for enterprise environments.
+
+---
+
+# 🏗 Solution Architecture
+
+```mermaid
+flowchart LR
+
+A[Raw Excel Dataset]
+B[Python ETL Pipeline]
+C[Data Validation & Cleaning]
+D[Processed Dataset]
+E[SQLite Data Warehouse]
+F[Star Schema]
+G[SQL KPI Views]
+H[Power BI Dashboard]
+I[Business Insights]
+
+A --> B
+B --> C
+C --> D
+D --> E
+E --> F
+F --> G
+G --> H
+H --> I
 ```
-Analytics/Excel/HR DATA_Excel.xlsx ("Data" sheet, raw)
-    → ETL/Python/data_cleaning.py   (profile, validate, drop junk/constant cols, rename, export)
-    → Data/processed/hrdata_clean.csv
-    → ETL/SQL/schema.sql             (star schema DDL)
-    → ETL/SQL/load.sql               (staging → dimensions → Fact_Employee)
-    → ETL/SQL/views.sql              (governed KPI views)
-    → Power BI (imports from the same star schema)
+
+---
+
+# 🔄 Data Pipeline
+
+The analytics workflow follows a structured ETL process:
+
+```text
+Raw Excel Dataset
+        │
+        ▼
+Python Data Cleaning
+        │
+        ▼
+Validation & Profiling
+        │
+        ▼
+Processed Dataset
+        │
+        ▼
+SQLite Database
+        │
+        ▼
+Star Schema
+        │
+        ▼
+SQL KPI Views
+        │
+        ▼
+Power BI Dashboard
+        │
+        ▼
+Executive Insights
 ```
 
-## Key Findings
+---
 
-| KPI                           |                        Value |
-|--------------------------------|------------------------------:|
-| Employees                      |                         1,470 |
-| Overall Attrition Rate         |                         16.1% |
-| Highest-Risk Role              | Sales Representative (39.8%) |
-| Highest-Risk Department        |            Sales (20.6%) |
-| Overtime Attrition             |                         30.5% |
-| Non-Overtime Attrition         |                         10.4% |
-| Avg. Monthly Income (Leavers)  |                        $4,787 |
-| Avg. Monthly Income (Stayers)  |                        $6,833 |
-| Avg. Tenure (Leavers)          |                    5.1 years |
-| Avg. Tenure (Stayers)          |                    7.4 years |
+# 📂 Repository Structure
 
-**Overtime is the strongest single attrition signal** — employees working overtime leave at roughly 3x the rate of those who don't.
+| Folder | Description |
+|---------|-------------|
+| **Analytics/** | Power BI dashboard, Excel workbook, dashboard assets |
+| **Architecture/** | High-Level Design (HLD), Low-Level Design (LLD), Data Architecture |
+| **Business/** | BRD, TRD, Business Insights and Recommendations |
+| **Data/raw/** | Original IBM HR Analytics dataset |
+| **Data/processed/** | Cleaned dataset generated by Python ETL |
+| **ETL/Python/** | Data preprocessing, validation, automation scripts |
+| **ETL/SQL/** | Database schema, SQL scripts, KPI queries and analytical views |
+| **Testing/** | KPI reconciliation documentation |
+| **tests/** | Automated unit and integration tests |
 
-Full KPI definitions and reconciliation queries live in `ETL/SQL/kpi_queries.sql`, `department_analysis.sql`, and `attrition_deep_dive.sql`.
+---
 
-<img width="1450" height="812" alt="Screenshot 2026-07-04 133033" src="https://github.com/user-attachments/assets/e10a79cc-76d6-45af-bbb3-4d86121d9809" />
+# 🛠 Technology Stack
 
+| Category | Technologies |
+|-----------|--------------|
+| **Programming Language** | Python |
+| **Database** | SQLite |
+| **SQL** | SQL (DDL, DML, Views) |
+| **Data Processing** | Pandas, NumPy |
+| **Business Intelligence** | Microsoft Power BI |
+| **Spreadsheet** | Microsoft Excel |
+| **Version Control** | Git, GitHub |
+| **Testing** | pytest |
+| **Code Quality** | Black, flake8, isort, mypy |
+| **Documentation** | Markdown, Mermaid |
 
-## Quality Assurance
+---
 
-| Metric        | Status         |
-|----------------|---------------|
-| Unit Tests     | ✅ 65 Passed  |
-| Test Coverage  | ✅ 80.9%      |
-| Black          | ✅ Passed     |
-| isort          | ✅ Passed     |
-| flake8         | ✅ Passed     |
-| mypy           | ✅ Passed     |
-| CI Pipeline    | ✅ Passing    |
+# 📊 Dataset Information
 
-## Tech Stack
+| Attribute | Details |
+|------------|---------|
+| Dataset | IBM HR Analytics Employee Attrition |
+| Records | 1,470 Employees |
+| Features | 43 Employee Attributes |
+| Data Type | Structured HR Dataset |
+| Source | IBM Sample HR Dataset (Kaggle) |
+| Personally Identifiable Information | None (Synthetic Dataset) |
 
-**Data Engineering:** Python, Pandas, SQLite
-**Analytics:** SQL, Power BI, Excel
-**Engineering:** Pytest, GitHub Actions, Black, isort, flake8, mypy, pre-commit
+---
 
-## Project Structure
+# 📈 Data Model
 
+The project implements a dimensional Star Schema to support analytical reporting and Power BI visualization.
+
+### Fact Table
+
+- Fact_Employee
+
+### Dimension Tables
+
+- Dim_Department
+- Dim_JobRole
+- Dim_Education
+- Dim_Gender
+- Dim_BusinessTravel
+- Dim_MaritalStatus
+- Dim_OverTime
+
+The dimensional model enables efficient aggregation, KPI calculations, and interactive dashboard filtering.
+
+---
+
+# ⚙ ETL & Data Engineering Pipeline
+
+The project follows a modular ETL architecture that converts raw HR data into a clean, analytics-ready dataset for SQL reporting and Power BI visualization.
+
+```text
+Raw Excel Dataset
+        │
+        ▼
+Data Profiling & Validation
+        │
+        ▼
+Data Cleaning & Transformation
+        │
+        ▼
+Processed Dataset
+        │
+        ▼
+SQLite Data Warehouse
+        │
+        ▼
+Star Schema Modeling
+        │
+        ▼
+SQL Views & KPI Generation
+        │
+        ▼
+Power BI Dashboard
 ```
-Analytics/      Excel workbook + dashboard, Power BI .pbix
-Architecture/   HLD, LLD, DataArchitecture, system diagram
-Business/       BRD, TRD, insights and recommendations
-Data/raw/       Legacy 15-column extract (untouched, read only by pre-existing dashboards)
-Data/processed/ Output of the Python cleaning pipeline (generated, not committed)
-ETL/Python/     data_cleaning.py, run_sql_pipeline.py, utils/config.py
-ETL/SQL/        schema.sql, load.sql, views.sql, kpi_queries.sql, department_analysis.sql, attrition_deep_dive.sql
-Testing/        KPI reconciliation documentation
-tests/          Automated test suite (pytest)
-```
 
-## Local Setup
+---
+
+### Pipeline Components
+
+| Stage | Description |
+|--------|-------------|
+| Data Profiling | Identifies missing values, duplicate records, and schema inconsistencies |
+| Data Cleaning | Removes redundant fields, standardizes column names, validates records |
+| Data Transformation | Prepares analytics-ready tables for reporting |
+| SQL Modeling | Creates Star Schema with Fact and Dimension tables |
+| KPI Layer | Generates reusable SQL Views for business reporting |
+| Visualization | Interactive dashboards developed in Microsoft Power BI |
+
+---
+
+# 📊 Dashboard Features
+
+The Power BI dashboard provides a comprehensive view of workforce performance through multiple interactive report pages.
+
+### Executive Dashboard
+
+- Workforce Summary
+- Employee Headcount
+- Active Employees
+- Attrition Rate
+- Average Age
+- Average Salary
+
+---
+
+### Employee Analytics
+
+- Department-wise Distribution
+- Gender Distribution
+- Education Analysis
+- Marital Status Analysis
+- Age Group Analysis
+- Business Travel Analysis
+
+---
+
+### Attrition Analysis
+
+- Department-wise Attrition
+- Job Role Attrition
+- Education-wise Attrition
+- Overtime Analysis
+- Attrition by Age Group
+- Attrition by Gender
+
+---
+
+### Employee Satisfaction
+
+- Job Satisfaction Levels
+- Work-Life Balance
+- Environment Satisfaction
+- Relationship Satisfaction
+- Performance Rating
+
+---
+
+### Interactive Features
+
+- Dynamic Slicers
+- Cross Filtering
+- Drill-down Analysis
+- Responsive KPI Cards
+- Interactive Visualizations
+- Dynamic Education Filters
+
+---
+
+# 📈 Business Insights
+
+The analysis identifies several key workforce trends that support HR decision-making.
+
+| Business KPI | Result |
+|--------------|---------|
+| Overall Attrition Rate | **16.1%** |
+| Employees | **1,470** |
+| Employees Leaving | **237** |
+| Highest Attrition Department | **Sales** |
+| Highest Risk Job Role | **Sales Representative** |
+| Strongest Attrition Driver | **Overtime** |
+| Average Tenure (Leavers) | **5.1 Years** |
+| Average Tenure (Current Employees) | **7.4 Years** |
+
+---
+
+## Key Insights
+
+### 📌 Overtime significantly impacts employee retention
+
+Employees working overtime exhibit approximately **three times higher attrition** than employees who do not work overtime, making overtime the strongest workforce risk indicator.
+
+---
+
+### 📌 Sales department experiences the highest employee turnover
+
+The Sales department records the highest attrition among all departments, indicating opportunities for targeted retention strategies.
+
+---
+
+### 📌 Lower income employees are more likely to leave
+
+Employees leaving the organization generally receive lower monthly income than retained employees.
+
+---
+
+### 📌 Employee tenure strongly correlates with retention
+
+Employees with shorter tenure demonstrate a higher likelihood of leaving the organization.
+
+---
+
+### 📌 Education influences workforce composition
+
+Interactive education filters allow HR managers to evaluate workforce characteristics across different education levels without rebuilding reports.
+
+---
+
+# 📈 Key Performance Indicators
+
+The dashboard tracks several HR metrics, including:
+
+- Employee Count
+- Active Employees
+- Attrition Count
+- Attrition Rate
+- Average Monthly Income
+- Average Age
+- Average Years at Company
+- Average Job Satisfaction
+- Department Distribution
+- Education Distribution
+- Overtime Distribution
+- Business Travel Distribution
+
+---
+
+# 🚀 Technical Highlights
+
+### Data Engineering
+
+- Automated Python ETL Pipeline
+- Data Validation & Cleaning
+- Feature Engineering
+- Modular Pipeline Architecture
+
+---
+
+### Database Engineering
+
+- SQLite Data Warehouse
+- Dimensional Star Schema
+- SQL Views
+- Analytical Queries
+- KPI Layer
+
+---
+
+### Business Intelligence
+
+- Interactive Power BI Reports
+- Dynamic KPI Cards
+- Drill-down Analysis
+- Cross Filtering
+- Dashboard Navigation
+- Responsive Layout
+
+---
+
+### Software Engineering
+
+- Automated Testing
+- Code Formatting
+- Type Checking
+- Modular Project Structure
+- Version Control using Git
+
+---
+
+# 🧪 Local Setup
+
+Clone the repository and execute the complete ETL pipeline locally.
 
 ```bash
+# Clone repository
+git clone https://github.com/your-username/hr-workforce-analytics-platform.git
+
+# Navigate into project
+cd hr-workforce-analytics-platform
+
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate environment
+
+# Windows
+venv\Scripts\activate
+
+# Linux / macOS
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run pipeline
+# Execute ETL Pipeline
 python ETL/Python/data_cleaning.py
 python ETL/Python/run_sql_pipeline.py
 ```
 
-`run_sql_pipeline.py` builds a local SQLite database (`ETL/SQL/hr_analytics.db`) so the SQL layer can be tested independently of Power BI.
+The SQL pipeline generates a local SQLite database that can be connected directly to Power BI for reporting.
 
-## Testing
+---
+
+# 📁 Project Documentation
+
+The repository includes detailed business and technical documentation commonly used in enterprise analytics projects.
+
+| Document | Purpose |
+|----------|---------|
+| **BRD.md** | Business Requirements Document |
+| **TRD.md** | Technical Requirements Document |
+| **HLD.md** | High-Level Design |
+| **LLD.md** | Low-Level Design |
+| **DataArchitecture.md** | Star Schema & Data Flow |
+| **SystemDiagram.md** | Overall Solution Architecture |
+
+---
+
+# ✅ Testing & Code Quality
+
+The project includes automated testing and code quality checks to ensure pipeline reliability.
+
+### Run Unit Tests
 
 ```bash
-# Run all tests
 pytest tests/ -v
-
-# Run with coverage report
-pytest tests/ --cov=ETL --cov-report=html
-
-# Run specific test file
-pytest tests/unit/test_data_cleaning.py -v
 ```
 
-## Code Quality
-
-| Tool       | Purpose                    |
-|------------|-----------------------------|
-| Black      | Code formatting             |
-| isort      | Import sorting              |
-| flake8     | Style enforcement           |
-| mypy       | Static type checking        |
-| pytest     | Unit & integration testing  |
-| pre-commit | Automated pre-commit checks |
+### Generate Coverage Report
 
 ```bash
-# Format code
-black ETL/ tests/
+pytest tests/ --cov=ETL --cov-report=html
+```
 
-# Sort imports
-isort ETL/ tests/
+### Code Formatting
 
-# Lint
+```bash
+black ETL/
+```
+
+### Import Sorting
+
+```bash
+isort ETL/
+```
+
+### Linting
+
+```bash
 flake8 ETL/
+```
 
-# Type check
+### Static Type Checking
+
+```bash
 mypy ETL/
 ```
 
-## Continuous Integration
+---
 
-Every push and pull request automatically runs:
+# 📈 Business Impact
 
-- Unit and integration tests
-- Coverage validation
-- Code formatting checks (Black, isort)
-- Static analysis (flake8, mypy)
+The solution demonstrates how Business Intelligence can support Human Resource decision-making by transforming raw operational data into actionable insights.
 
-## Data Notes
+### Key Benefits
 
-- 1,470 employees, 44 raw columns (43 fields + a cosmetic `emp no` label)
-- No calendar date field exists in the source (no hire/termination date) — every KPI is a cross-sectional snapshot, not a time series
-- The 6 legacy Excel Power Pivot calculated fields (`CF_*`) are documented but not used in the pipeline — `Attrition` is the sole canonical flag
-- Full technical rationale and identifier resolution live in `Business/TRD.md`
+- Automated HR reporting workflow.
+- Reduced manual data preparation effort.
+- Centralized workforce KPI monitoring.
+- Improved employee attrition visibility.
+- Enhanced executive reporting through interactive dashboards.
+- Reusable SQL analytics layer.
+- End-to-end analytics engineering workflow.
 
-## Documentation
+---
 
-| Document | Coverage |
-|----------|----------|
-| `Business/BRD.md` | Business problem, KPIs, scope, assumptions, sign-off |
-| `Business/TRD.md` | Technical requirements, verified schema, identifier resolution |
-| `Architecture/HLD.md` | Component-level system design |
-| `Architecture/LLD.md` | Detailed data flow, sequence, error handling |
-| `Architecture/DataArchitecture.md` | Star schema, fact/dimension design, lineage |
+# 💼 Skills Demonstrated
 
-## Contributing
+This project demonstrates practical experience in:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and pull request process.
+### Business Intelligence
 
-## Security
+- Power BI
+- Dashboard Design
+- Executive Reporting
+- KPI Development
+- Data Visualization
 
-See [SECURITY.md](SECURITY.md) for vulnerability reporting and security best practices.
+### Data Analytics
 
-## License
+- SQL
+- Data Analysis
+- Business Analysis
+- Workforce Analytics
+- Statistical Reporting
 
-MIT License — see [LICENSE](LICENSE) file.
+### Data Engineering
+
+- Python ETL
+- Data Cleaning
+- Feature Engineering
+- Data Validation
+- SQLite
+
+### Software Engineering
+
+- Git & GitHub
+- Modular Project Structure
+- Unit Testing
+- Documentation
+- Version Control
+
+---
+
+# 🔮 Potential Enhancements
+
+Future improvements that can further extend the platform include:
+
+- Predictive Employee Attrition Modeling
+- Machine Learning–based Retention Risk Score
+- Automated Power BI Service Refresh
+- Azure SQL Database Integration
+- Row-Level Security (RLS)
+- Incremental Data Loading
+- REST API Integration
+- Cloud Deployment using Azure
+
+---
+
+# 📌 Repository Highlights
+
+✔ Enterprise-style Project Structure
+
+✔ Automated Python ETL Pipeline
+
+✔ SQL Star Schema Implementation
+
+✔ Interactive Power BI Dashboard
+
+✔ Workforce KPI Reporting
+
+✔ Comprehensive Project Documentation
+
+✔ Automated Testing
+
+✔ Production-ready Repository Organization
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+If you would like to improve this project, please:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes.
+4. Submit a Pull Request.
+
+Please review **CONTRIBUTING.md** before contributing.
+
+---
+
+# 🔒 Security
+
+If you discover a security issue, please follow the responsible disclosure process described in **SECURITY.md**.
+
+---
+
+# 📜 License
+
+This project is licensed under the **MIT License**.
+
+See the **LICENSE** file for complete details.
+
+---
+
+<div align="center">
+
+### ⭐ If you found this project helpful, consider giving it a Star!
+
+Thank you for visiting this repository.
+
+</div>
