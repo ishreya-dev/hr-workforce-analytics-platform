@@ -58,7 +58,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 ## Executive Workforce Dashboard
 
 <p align="center">
-<img src="assets/dashboard/executive_dashboard.png" width="900">
+<img src="assets/executive_dashboard.png" width="900">
 </p>
 
 ---
@@ -71,7 +71,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 
 ### Associate Degree
 
-<img src="assets/associate_degree.png" width="430">
+<img src="assets/dashboards/associate_degree.png" width="430">
 
 </td>
 
@@ -79,7 +79,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 
 ### Bachelor's Degree
 
-<img src="assets/bachelors_degree.png" width="430">
+<img src="assets/dashboards/bachelors_degree.png" width="430">
 
 </td>
 </tr>
@@ -97,7 +97,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 
 ### High School
 
-<img src="assets/high_school.png" width="430">
+<img src="assets/dashboards/high_school.png" width="430">
 
 </td>
 </tr>
@@ -107,7 +107,7 @@ The Power BI solution provides multiple interactive dashboard views for workforc
 
 ### Master's Degree
 
-<img src="assets/masters_degree.png" width="430">
+<img src="assets/dashboards/masters_degree.png" width="430">
 
 </td>
 </tr>
